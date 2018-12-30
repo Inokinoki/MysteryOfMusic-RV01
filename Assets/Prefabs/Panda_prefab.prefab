@@ -295,6 +295,7 @@ GameObject:
   - component: {fileID: 136447150377304346}
   - component: {fileID: 114899428127481880}
   - component: {fileID: 195755234094483056}
+  - component: {fileID: 95707544680856550}
   m_Layer: 0
   m_Name: Panda_prefab
   m_TagString: Enermy
@@ -1447,7 +1448,7 @@ Transform:
   m_GameObject: {fileID: 1317671484068752}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 26.746626, y: 7.2605743, z: 1174.5383}
-  m_LocalScale: {x: 10, y: 10, z: 10}
+  m_LocalScale: {x: 20, y: 20, z: 20}
   m_Children:
   - {fileID: 4765504275183834}
   - {fileID: 4403895199774194}
@@ -1656,15 +1657,32 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!95 &95707544680856550
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1317671484068752}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 81aee8f61f00f964e8115be1aad98415, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
 --- !u!111 &111571983618014918
 Animation:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1317671484068752}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
-  m_Animation: {fileID: 7400000, guid: 1cc79ba899a3add40ab5b8743edd38dd, type: 3}
+  m_Animation: {fileID: 7400000, guid: bc69180245b322949a1ebb2d27c572b0, type: 2}
   m_Animations:
   - {fileID: 7400000, guid: 1cc79ba899a3add40ab5b8743edd38dd, type: 3}
   - {fileID: 7400000, guid: a3b5764e820d99446bf8471e5adf41dd, type: 3}

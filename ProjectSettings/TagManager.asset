@@ -4,11 +4,14 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - EnermyTarget
-  - MagicBall
   - Terrain
-  - MagicEffect
+  - MIDIPlayer
+  - MagicBall
   - Enermy
+  - MagicEffect
+  - MagicController
+  - EnermyTarget
+  - MainCameraNoVR
   layers:
   - Default
   - TransparentFX

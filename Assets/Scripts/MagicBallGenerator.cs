@@ -10,30 +10,32 @@ public class MagicBallGenerator : MonoBehaviour {
 
     private Stack<Vector3> lastPositions;
 
+    private Stack<int> lastIndexs;
+
     public int[] indexAvailable;
 
-    public int maxLength = 16;
+    private int maxLength = 12;
 
-    public float radius = 5.0f;
+    public float ud_dis = 2.0f;
 
-    public float height = 6.0f;
+    public float lg_dis = 2.0f;
 
-    public float deltaHeight = 1.0f;
+    public float eye_dis = 5.0f;
 
-    private float timer = 0;
+    public float height = 4.0f;
+
+    //public float deltaHeight = 1.0f;
 
     public bool RetrieveMagicBall(GameObject ball)
     {
+
         // Retrieve Magic Ball from array
         if (this.magicBalls.Contains(ball))
         {
             this.lastPositions.Push(ball.transform.position);
+            int index = ball.GetComponent<MagicBallController>().index;
+            this.lastIndexs.Push(index);
             this.magicBalls.Remove(ball);
-
-            // Turn up the ball circle to avoid the selection
-            this.height += this.deltaHeight;
-            this.Relocation();
-            this.timer = 2.0f;
 
             return true;
         }
@@ -50,67 +52,45 @@ public class MagicBallGenerator : MonoBehaviour {
         return false;
     }
 
-    public void Relocation()
+    public void HideMagicBall()
     {
-        int count = 0;
-        for (List<GameObject>.Enumerator e = this.magicBalls.GetEnumerator(); e.MoveNext();)
+        for (int i = 0; i < this.magicBalls.Count; i++)
         {
-            e.Current.transform.position = new Vector3(
-                    this.transform.position.x + this.radius * Mathf.Cos(Mathf.PI * 2.0f / this.maxLength * count),
-                    this.transform.position.y + this.height,
-                    this.transform.position.z + this.radius * Mathf.Sin(Mathf.PI * 2.0f / this.maxLength * count)
-            );
-            count++;
+            GameObject magicBall = this.magicBalls[i];
+            Destroy(magicBall);
+        }
+
+        this.magicBalls.Clear();
+    }
+
+    public void ShowMagicBall()
+    {
+        for (int i = 0; i < this.indexAvailable.Length; i++)
+        {
+            GameObject magicBall = Instantiate(magicBallPrefab, 
+                this.transform.position + 
+                this.transform.TransformDirection(
+                    Quaternion.AngleAxis(20 * (i - this.indexAvailable.Length / 2), Vector3.up) * Vector3.forward
+                    ) * 5.0f + Vector3.up * this.height, 
+                Quaternion.identity);
+            magicBall.GetComponent<MagicBallController>().index = this.indexAvailable[i];
+            this.magicBalls.Add(magicBall);
         }
     }
+
 
     // Use this for initialization
-    void Start () {
+    void Start()
+    {
         this.magicBalls = new List<GameObject>(this.maxLength);
         this.lastPositions = new Stack<Vector3>(this.maxLength);
-
-        for (int i = 0; i < this.maxLength; i++)
-        {
-            GameObject magicBall = Instantiate(magicBallPrefab, new Vector3(
-                    this.transform.position.x + this.radius * Mathf.Cos(Mathf.PI * 2.0f / this.maxLength * i),
-                    this.transform.position.y + this.height,
-                    this.transform.position.z + this.radius * Mathf.Sin(Mathf.PI * 2.0f / this.maxLength * i)
-                ), Quaternion.identity);
-            magicBall.GetComponent<MagicBallController>().index = this.indexAvailable[Random.Range(0, this.indexAvailable.Length)];
-            this.magicBalls.Add(magicBall);
-        }
+        this.lastIndexs = new Stack<int>(this.maxLength);
     }
-	
-	// Update is called once per frame
-	void FixedUpdate () {
-        bool isMoving = false;
+    
+    public void SetAvailableIndex(List<int> list)
+    {
+        indexAvailable = new int[list.Count];
+        list.CopyTo(indexAvailable);
+    }
 
-        if (this.timer > 0)
-        {
-            isMoving = true;
-            this.timer -= Time.deltaTime;
-            if (this.timer <= 0)
-            {
-                // Recovery the height
-                this.height -= this.deltaHeight;
-                this.Relocation();
-            }
-        }
-
-        while(this.magicBalls.Count < this.maxLength)
-        {
-            // To garantee the generation of magic ball is at the same height of the others
-            Vector3 lastPosition = this.lastPositions.Pop();
-            lastPosition.y = this.transform.position.y + this.height;
-
-            GameObject magicBall = Instantiate(magicBallPrefab, lastPosition, Quaternion.identity);
-            magicBall.GetComponent<MagicBallController>().index = this.indexAvailable[Random.Range(0, this.indexAvailable.Length)];
-            this.magicBalls.Add(magicBall);
-        }
-
-		for (List<GameObject>.Enumerator e = this.magicBalls.GetEnumerator(); e.MoveNext();)
-        {
-            e.Current.transform.RotateAround(this.transform.position, Vector3.up, 0.5f);
-        }
-	}
 }

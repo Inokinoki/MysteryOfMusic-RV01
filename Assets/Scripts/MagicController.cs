@@ -12,6 +12,10 @@ public class MagicController : MonoBehaviour {
     public GameObject tipsManager;
     public GameObject noteManager;
 
+    public int baseNote = NOTES.C3;
+
+    private MIDIPlayer midiPlayer;
+
     private GameObject lastFocused;
 
     private int index = -1;
@@ -20,8 +24,28 @@ public class MagicController : MonoBehaviour {
 
     private int score = 0;
 
+    public void PlayCurrentNote()
+    {
+        if (this.index >= 0)
+        {
+            this.midiPlayer.setNote(this.index + this.baseNote);
+            this.timer = 1.0f;
+        }
+    }
+
+    public void PlayAnotherNote(int index)
+    {
+        if (index >= 0 && this.timer <= 0)
+        {
+            this.midiPlayer.setNote(index + this.baseNote);
+            this.timer = 1.0f;
+        }
+    }
+
     // Use this for initialization
     void Start () {
+        this.midiPlayer = GameObject.FindGameObjectWithTag("MIDIPlayer").GetComponent<MIDIPlayer>();
+
         if (this.magicIndicator)
         {
             this.magicIndicator.GetComponent<Image>().color = Color.white;
@@ -59,15 +83,99 @@ public class MagicController : MonoBehaviour {
                 {
                     this.tipsManager.GetComponent<Text>().text = "";
                 }
+
+                // Stop the note
+                this.midiPlayer.setNote(-1);
             }
         }
     }
+
+    public void ChargeWithMagicBall(GameObject ball)
+    {
+        if (ball != null && ball.CompareTag("MagicBall"))
+        {
+            MagicBallController magicBallController = ball.GetComponent<MagicBallController>();
+
+            if (this.index >= 0 && (Mathf.Abs(this.index - magicBallController.index) == 2))
+            {
+                // NOT TO-DO: condition -> C and B... B and C have no interval...
+                // If composition is possible
+                this.index = (this.index + magicBallController.index) / 2;
+            }
+            else
+                this.index = magicBallController.index;
+
+            // Set Magic Indicator
+            if (this.magicIndicator)
+            {
+                this.magicIndicator.GetComponent<Image>().color =
+                    magicBallController.materials[this.index].color;
+            }
+
+            if (this.noteManager)
+            {
+                this.noteManager.GetComponent<Text>().text =
+                    magicBallController.notes[this.index];
+            }
+
+            Destroy(ball);
+        }
+    }
+
+    public void LaunchProjectile(object sender)
+    {
+        if (this.index >= 0)
+        {
+            if (this.projectiles.Length > this.index)
+            {
+                GameObject eyeManager = GameObject.FindGameObjectWithTag("MainCamera");
+                if (eyeManager != null)
+                {
+                    GameObject projectile = Instantiate(this.projectiles[this.index], eyeManager.transform.position - new Vector3(0, 0.5f, 0), eyeManager.transform.rotation);
+                    projectile.GetComponent<ProjectileFly>().index = this.index;
+
+                    GameObject enermy = eyeManager.GetComponent<EyeManager>().GetTargetEnermy();
+
+                    projectile.GetComponent<ProjectileFly>().SetTarget(enermy);
+                
+                    // Set magic charge to non charge
+                    this.index = -1;
+
+                    if (this.magicIndicator)
+                    {
+                        this.magicIndicator.GetComponent<Image>().color = Color.white;
+                    }
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("Not charged");
+            if (this.tipsManager)
+            {
+                this.timer = 3.0f;
+                this.tipsManager.GetComponent<Text>().text = "You are not charged";
+            }
+        }
+    }
+
+    public void RemoveMagicBallInPool(GameObject ball)
+    {
+        if (ball != null && ball.CompareTag("MagicBall"))
+        {
+            if (this.GetComponentInParent<MagicBallGenerator>().HasMagicBall(ball))
+            {
+                this.GetComponentInParent<MagicBallGenerator>().RetrieveMagicBall(ball);
+            }
+        }
+    }
+    
 
     // Update is called once per frame
     void Update () {
         if (Input.GetMouseButtonUp(0))
         {
-            if (this.index >= 0)
+            /*if (this.index >= 0)
             {
                 if (this.projectiles.Length > this.index)
                 {
@@ -91,15 +199,15 @@ public class MagicController : MonoBehaviour {
                     this.timer = 3.0f;
                     this.tipsManager.GetComponent<Text>().text = "You are not charged";
                 }
-            }
+            }*/
         }
-
-        Debug.DrawRay(this.transform.position, this.transform.TransformDirection(Vector3.forward) * 8.0f, Color.red);
+        
+        // Debug.DrawRay(this.transform.position, this.transform.TransformDirection(Vector3.forward) * 8.0f, Color.red);
 
         if (Input.GetMouseButton(1))
         {
             // Get the ball
-            RaycastHit hit;
+            /*RaycastHit hit;
 
             if (Physics.Raycast(this.transform.position, this.transform.TransformDirection(Vector3.forward), out hit))
             {
@@ -145,10 +253,10 @@ public class MagicController : MonoBehaviour {
                         Destroy(hit.transform.gameObject);
                     }
                 }
-            }
+            }*/
         }
 
-        RaycastHit detect_hit;
+        /*RaycastHit detect_hit;
 
         if (Physics.Raycast(this.transform.position, this.transform.TransformDirection(Vector3.forward), out detect_hit))
         {
@@ -178,6 +286,6 @@ public class MagicController : MonoBehaviour {
                     }
                 }
             }
-        }
+        }*/
     }
 }
