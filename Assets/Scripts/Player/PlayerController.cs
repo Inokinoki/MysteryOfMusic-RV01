@@ -2,10 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour {
 
-    public bool isVR = false;   // Is VR mode flag
+    public bool isVR = true;   // Is VR mode flag
 
     private int baseNote = NOTES.C3;
     public int BaseNote
@@ -57,6 +58,11 @@ public class PlayerController : MonoBehaviour {
         {
             Control();
         }
+
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            SceneManager.LoadScene("Menu");
+        }
 	}
 
     /*
@@ -81,6 +87,16 @@ public class PlayerController : MonoBehaviour {
             {
                 OnEnermyEnter(gameObject);
             }
+            else if (targetLocked != null && targetLocked.CompareTag("Enermy"))
+            {
+                PandaMove lastPandaMove = targetLocked.GetComponent<PandaMove>();
+                if (lastPandaMove != null)
+                {
+                    lastPandaMove.Unlock();
+                }
+
+                targetLocked = null;
+            }
 
             if (Input.GetMouseButtonUp(0) && gameObject.CompareTag("MagicBall"))
             {
@@ -89,8 +105,18 @@ public class PlayerController : MonoBehaviour {
 
             if (Input.GetMouseButton(1) && gameObject.CompareTag("MagicBall"))
             {
-                OnBallGet(gameObject);
+                OnBallGet(gameObject, currentCamera);
             }
+        }
+        else if (targetLocked != null && targetLocked.CompareTag("Enermy"))
+        {
+            PandaMove lastPandaMove = targetLocked.GetComponent<PandaMove>();
+            if (lastPandaMove != null)
+            {
+                lastPandaMove.Unlock();
+            }
+
+            targetLocked = null;
         }
 
         // Launch projectile
@@ -134,27 +160,79 @@ public class PlayerController : MonoBehaviour {
 
         // Get raycast object of MainCamera
         GameObject gameObject = GetRaycastedObject(currentCamera);
+
         if (gameObject != null)
         {
             if (gameObject.CompareTag("Enermy"))
             {
                 OnEnermyEnter(gameObject);
             }
+            else if (targetLocked != null && targetLocked.CompareTag("Enermy"))
+            {
+                PandaMove lastPandaMove = targetLocked.GetComponent<PandaMove>();
+                if (lastPandaMove != null)
+                {
+                    lastPandaMove.Unlock();
+                }
+
+                targetLocked = null;
+            }
+        }
+        else if (targetLocked != null && targetLocked.CompareTag("Enermy"))
+        {
+            PandaMove lastPandaMove = targetLocked.GetComponent<PandaMove>();
+            if (lastPandaMove != null)
+            {
+                lastPandaMove.Unlock();
+            }
+
+            targetLocked = null;
         }
 
         // Left hand play note of ball
         gameObject = GetRaycastedObject(leftManette);
         if (gameObject != null)
         {
-            // Need to be changed to tuochpad
-            if (Input.GetMouseButtonUp(0) && gameObject.CompareTag("MagicBall"))
+            Animator leftAnimator = leftManette.GetComponentInChildren<Animator>();
+
+            if (leftAnimator != null)
+            {
+                // Lighten magic effects
+                // We can also use setActive of sub components, but this is for practicing animator
+                leftAnimator.SetBool("IsHalt", false);
+                leftAnimator.SetBool("IsAttracting", true);
+            }
+
+            if (ViveInput.GetPadPressVector(HandRole.LeftHand) != Vector2.zero && gameObject.CompareTag("MagicBall"))
             {
                 OnBallPlayed(gameObject);
+
+                ViveInput.TriggerHapticPulse(HandRole.LeftHand, 500);
             }
 
             if (ViveInput.GetPress(HandRole.LeftHand, ControllerButton.Trigger) && gameObject.CompareTag("MagicBall"))
             {
-                OnBallGet(gameObject);
+                if (OnBallGet(gameObject, leftManette) != null)
+                {
+                    Animator rightAnimator = rightManette.GetComponentInChildren<Animator>();
+                    if (rightAnimator != null)
+                    {
+                        // Light magic effects
+                        rightAnimator.SetBool("IsLaunched", false);
+                        rightAnimator.SetBool("IsCharged", true);
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Need test
+            Animator leftAnimator = leftManette.GetComponentInChildren<Animator>();
+            if (leftAnimator != null)
+            {
+                // Close magic effects
+                leftAnimator.SetBool("IsHalt", true);
+                leftAnimator.SetBool("IsAttracting", false);
             }
         }
 
@@ -162,6 +240,29 @@ public class PlayerController : MonoBehaviour {
         if (ViveInput.GetPressDown(HandRole.RightHand, ControllerButton.Trigger))
         {
             LaunchProjectile(rightManette);
+
+            Animator rightAnimator = rightManette.GetComponentInChildren<Animator>();
+            if (rightAnimator != null)
+            {
+                // Close magic effects
+                rightAnimator.SetBool("IsLaunched", true);
+                rightAnimator.SetBool("IsCharged", false);
+            }
+
+            ViveInput.TriggerHapticPulse(HandRole.RightHand, 500);
+        }
+
+        // Right touch pad, play current note
+        if (ViveInput.GetPadPressVector(HandRole.RightHand) != Vector2.zero)
+        {
+            if (chargedIndex != -1)
+            {
+                if (midiPlayer)
+                {
+                    midiPlayer.AddNote(new SingleNote(baseNote + chargedIndex, 0.5f));
+                }
+                ViveInput.TriggerHapticPulse(HandRole.RightHand, 500);
+            }
         }
 
         // Left grib, show balls
@@ -286,7 +387,7 @@ public class PlayerController : MonoBehaviour {
     /*
      * Play note of entered ball
      */
-    private MagicBallController OnBallGet(GameObject gameObject)
+    private MagicBallController OnBallGet(GameObject gameObject, GameObject origin)
     {
         MagicBallController magicBallController = null;
 
@@ -294,13 +395,13 @@ public class PlayerController : MonoBehaviour {
         {
             magicBallController = gameObject.GetComponent<MagicBallController>();
 
-            if (currentCamera != null)
+            if (origin != null)
             {
                 // Move to player
-                gameObject.transform.Translate((currentCamera.transform.position - gameObject.transform.position) * Time.deltaTime * 2.0f, Space.World);
+                gameObject.transform.Translate((origin.transform.position - gameObject.transform.position) * Time.deltaTime * 2.0f, Space.World);
 
                 // Charge with the ball
-                if ((currentCamera.transform.position - gameObject.transform.position).magnitude < 0.8f)
+                if ((origin.transform.position - gameObject.transform.position).magnitude < 0.8f)
                 {
                     if (chargedIndex >= 0 && (Mathf.Abs(chargedIndex - magicBallController.index) == 2))
                     {
@@ -343,7 +444,7 @@ public class PlayerController : MonoBehaviour {
                 if (projectileManager.projectiles.Length > chargedIndex)
                 {
                     GameObject projectile = Instantiate(projectileManager.projectiles[chargedIndex],
-                        origin.transform.position - new Vector3(0, 0.5f, 0),
+                        origin.transform.position + origin.transform.TransformDirection(Vector3.forward),
                         origin.transform.rotation);
                     projectile.GetComponent<ProjectileFly>().index = chargedIndex;
                     projectile.GetComponent<ProjectileFly>().SetTarget(targetLocked);

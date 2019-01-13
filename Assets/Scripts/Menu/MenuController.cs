@@ -16,13 +16,14 @@ public class MenuController : MonoBehaviour {
 
     public void ExitApplication()
     {
-        if (Application.isEditor)
+        /*if (Application.isEditor)
         {
             UnityEditor.EditorApplication.isPlaying = false;
         }
         else
         {
             Application.Quit();
-        }
+        }*/
+        Application.Quit();
     }
 }

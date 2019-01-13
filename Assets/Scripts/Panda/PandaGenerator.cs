@@ -22,6 +22,8 @@ public class PandaGenerator : MonoBehaviour {
         minGenerateInterval = Configuration.enermyGenerateMinInterval;
         maxGenerateInterval = Configuration.enermyGenerateMaxInterval;
 
+        Debug.Log(Configuration.availablePanda.Count);
+
         minIndex = 0;
         ProjectileManager manager = GameObject.FindGameObjectWithTag("Terrain").GetComponent<ProjectileManager>();
         if (manager != null)
@@ -45,7 +47,7 @@ public class PandaGenerator : MonoBehaviour {
             if (pandaMove != null)
             {
                 pandaInstance.GetComponent<PandaMove>().target = destination;
-                pandaInstance.GetComponent<PandaMove>().index = Random.Range(minIndex, maxIndex);
+                pandaInstance.GetComponent<PandaMove>().index =  Configuration.availablePanda[Random.Range(0, Configuration.availablePanda.Count)];
             }
             timer = Random.Range(minGenerateInterval, maxGenerateInterval);
         }
